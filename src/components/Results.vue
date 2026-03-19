@@ -67,8 +67,18 @@ const otherMatches = birdResults.slice(1);
           <div class="absolute -left-2 top-0 bottom-0 w-1 bg-[#33602d] rounded-full"></div>
           <div class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300">
             <div class="flex flex-col sm:flex-row items-start gap-6">
-              <div class="w-28 h-28 shrink-0 rounded-xl overflow-hidden bg-[#efeeea]">
-                <img :src="primaryMatch.image" :alt="primaryMatch.common_name" class="w-full h-full object-cover" />
+              <!-- 
+                主匹配项图片容器问题分析：
+                原始尺寸 w-28 h-28 (112px × 112px) 太小，导致即使图片完整显示(object-contain)，
+                也会被压缩显示，看起来"图片显示不全"。
+                
+                根本原因：容器尺寸限制 → 图片被迫缩小展示 → 用户看不清细节
+                
+                解决方案：增大容器到 w-48 h-48 (192px × 192px)，参考 Home.vue 的推荐卡片(h-48)。
+                这样图片有足够空间展示，可以看到鸟类的细节特征。
+              -->
+              <div class="w-48 h-48 shrink-0 rounded-xl overflow-hidden bg-[#efeeea] flex items-center justify-center">
+                <img :src="primaryMatch.image" :alt="primaryMatch.common_name" class="w-full h-full object-contain" />
               </div>
               <div class="flex-1 w-full">
                 <div class="flex justify-between items-start">
@@ -101,8 +111,18 @@ const otherMatches = birdResults.slice(1);
         <article v-for="match in otherMatches" :key="match.species" 
                  class="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow duration-300 ml-4">
           <div class="flex items-start gap-6">
-            <div class="w-24 h-24 shrink-0 rounded-xl overflow-hidden bg-[#efeeea]">
-              <img :src="match.image" :alt="match.common_name" class="w-full h-full object-cover" />
+            <!-- 
+              其他匹配项图片容器问题与解决：
+              原始 w-24 h-24 (96px × 96px) - 过小，无法有效展示鸟类特征
+              → 改为 w-32 h-32 (128px × 128px) - 改善但仍需平衡
+              
+              对比说明：
+              - 主匹配项：w-48 h-48 (192px) - 最重要，需要清晰展示
+              - 其他项：w-32 h-32 (128px) - 参考信息，次要优先级
+              这样既能提供足够的图片展示空间，也可控制布局不过于臃肿。
+            -->
+            <div class="w-32 h-32 shrink-0 rounded-xl overflow-hidden bg-[#efeeea] flex items-center justify-center">
+              <img :src="match.image" :alt="match.common_name" class="w-full h-full object-contain" />
             </div>
             <div class="flex-1">
               <div class="flex justify-between items-start">

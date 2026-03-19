@@ -1,11 +1,24 @@
+/**
+ * 鸟类数据接口
+ * 定义了鸟类信息的数据结构
+ */
 export interface Bird {
-  species: string;
-  scientific_name: string;
-  common_name: string;
-  description: string;
-  image: string;
+  species: string;           // 物种唯一标识 (科学名_英文名)
+  scientific_name: string;   // 拉丁学名 (如: Chloris chloris)
+  common_name: string;       // 中文名称 (如: 欧金翅雀)
+  description: string;       // 鸟类描述信息 (形态、习性等)
+  image: string;             // 鸟类图片 URL
 }
 
+/**
+ * 本地鸟类数据库
+ * 
+ * 存储常见鸟类的详细信息 (中文名、学名、描述、图片等)
+ * 后端返回的物种标识符会在这里查询对应的详细信息
+ * 
+ * 键值：物种唯一标识 (species_english_name 格式)
+ * 值：鸟类详细信息对象
+ */
 export const birdDataset: Record<string, Bird> = {
   "Chloris chloris_European Greenfinch": {
     species: "Chloris chloris_European Greenfinch",
@@ -51,18 +64,36 @@ export const birdDataset: Record<string, Bird> = {
   }
 };
 
+/**
+ * 根据物种标识获取鸟类详细信息
+ * 
+ * 使用场景：
+ * - 后端返回鸟类识别结果 (只包含 species 和 confidence)
+ * - 前端调用此函数补充该鸟类的中文名、描述、图片等详情信息
+ * 
+ * @param species - 物种名称 (后端返回的识别结果物种标识)
+ * @returns 返回该物种的详细信息，如果未找到则返回默认信息
+ * 
+ * 查询逻辑：
+ * 1. 精确匹配 - 直接从 birdDataset 中查找
+ * 2. 模糊匹配 - 如果精确匹配失败，尝试通过学名模糊匹配
+ * 3. 降级处理 - 如果都失败，返回包含默认信息的对象，并从 species 中提取英文名作为 common_name
+ */
 export const getBirdData = (species: string): Bird => {
-  // Try exact match
+  // 精确匹配：直接从字典中查找，O(1) 时间复杂度
   if (birdDataset[species]) return birdDataset[species];
   
-  // Try fuzzy match by common name or part of species string
+  // 模糊匹配：通过学名进行部分匹配
+  // 用途：处理后端返回的物种标识格式可能略有不同的情况
   for (const key in birdDataset) {
     if (species.toLowerCase().includes(birdDataset[key].scientific_name.toLowerCase())) {
       return birdDataset[key];
     }
   }
 
-  // Default fallback
+  // 降级处理：如果本地数据库中没有该物种信息
+  // 返回占位符数据，避免 UI 显示错误
+  // 从 species 中提取英文名 (通常格式为 "科学名_英文名")
   return {
     species: species,
     scientific_name: "Unknown",
