@@ -25,6 +25,14 @@ export default defineConfig(({mode}) => {
         key: fs.readFileSync('./key.pem'),
         cert: fs.readFileSync('./cert.pem'),
       },
+      // 代理配置：将 /api 请求转发到后端
+      // 这样前端代码中可以使用相对路径 /api/xxx，手机访问时也能正确转发
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8000',
+          changeOrigin: true,
+        },
+      },
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       // Do not modify—file watching is disabled to prevent flickering during agent edits.
       hmr: process.env.DISABLE_HMR !== 'true',

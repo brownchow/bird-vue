@@ -61,10 +61,11 @@ const startAnalysis = async () => {
       throw new Error('没有录音数据');
     }
 
-    console.log('发送请求到 http://localhost:8000/analyze');
+    console.log('发送请求到 /api/analyze（通过代理转发到后端）');
     
     // 调用后端接口
-    const response = await axios.post('http://localhost:8000/analyze', formData, {
+    // 使用相对路径，通过 Vite 代理转发到后端
+    const response = await axios.post('/api/analyze', formData, {
       timeout: 10000,
       headers: {
         // 明确指定 Content-Type，让 axios 自动处理 boundary
@@ -90,7 +91,7 @@ const startAnalysis = async () => {
       } else if (error.response) {
         errorMessage.value = `后端返回错误: ${error.response.status} ${error.response.statusText}`;
       } else if (error.message.includes('Network Error')) {
-        errorMessage.value = '网络错误: 无法连接到后端服务，请确保后端已启动在 localhost:8000';
+        errorMessage.value = '网络错误: 无法连接到后端服务，请确保后端已启动在 localhost:8000，并重启前端服务';
       } else {
         errorMessage.value = `请求失败: ${error.message}`;
       }
