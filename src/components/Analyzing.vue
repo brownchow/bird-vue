@@ -61,11 +61,11 @@ const startAnalysis = async () => {
       throw new Error('没有录音数据');
     }
 
-    console.log('发送请求到 /api/analyze（通过代理转发到后端）');
+    console.log('发送请求到 /analyze（通过代理转发到后端）');
     
     // 调用后端接口
     // 使用相对路径，通过 Vite 代理转发到后端
-    const response = await axios.post('/api/analyze', formData, {
+    const response = await axios.post('/analyze', formData, {
       timeout: 10000,
       headers: {
         // 明确指定 Content-Type，让 axios 自动处理 boundary
