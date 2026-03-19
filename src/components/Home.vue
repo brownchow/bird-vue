@@ -90,11 +90,15 @@ const startRecording = async () => {
  * 停止录音的函数
  * 实现原理：
  * 1. 检查 MediaRecorder 是否正在录音
- * 2. 如果正在录音，调用 stop() 方法停止
- * 3. 清除计时器，更新录音状态
+ * 2. 调用 requestData() 请求最后的数据块
+ * 3. 然后调用 stop() 方法停止
+ * 4. 清除计时器，更新录音状态
  */
 const stopRecording = () => {
   if (mediaRecorder && mediaRecorder.state === 'recording') {
+    // 重要：先请求最后的数据块，然后再停止
+    // 否则最后一个数据块可能还没被收集就被停止了
+    mediaRecorder.requestData();
     mediaRecorder.stop();
     
     // 清除计时器
