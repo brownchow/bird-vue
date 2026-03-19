@@ -13,8 +13,24 @@ let mediaRecorder: MediaRecorder | null = null;
 let audioChunks: Blob[] = [];
 let durationInterval: number | null = null;
 
-// 音频格式：使用 WebM（浏览器原生支持）
-const MIME_TYPE = 'audio/webm';
+// 音频格式：优先使用 WAV（后端接口要求），其次 WebM
+// 实现原理：不同浏览器支持的格式不同，需要优雅降级
+const getSupportedMimeType = () => {
+  const types = [
+    'audio/wav',              // WAV 格式（后端支持）
+    'audio/webm;codecs=opus', // Chrome 默认
+    'audio/webm',
+    'audio/ogg;codecs=opus'   // Firefox
+  ];
+  for (const type of types) {
+    if (MediaRecorder.isTypeSupported(type)) {
+      console.log('使用的音频格式:', type);
+      return type;
+    }
+  }
+  return 'audio/webm'; // 回退
+};
+const MIME_TYPE = getSupportedMimeType();
 
 /**
  * 开始录音的函数

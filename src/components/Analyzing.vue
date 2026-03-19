@@ -41,16 +41,22 @@ const startAnalysis = async () => {
     // 构建 FormData，将音频文件发送到后端
     const formData = new FormData();
     if (props.audio?.audioBlob) {
-      // 给文件一个合适的名称，后端可能需要根据扩展名判断音频格式
-      formData.append('file', props.audio.audioBlob, 'recording.webm');
+      // 根据实际录音格式设置文件扩展名
+      // 实现原理：后端根据文件扩展名判断音频格式，WAV 格式需要 .wav 扩展名
+      const mimeType = props.audio.audioBlob.type;
+      const extension = mimeType.includes('wav') ? 'wav' : 
+                       mimeType.includes('webm') ? 'webm' : 
+                       mimeType.includes('ogg') ? 'ogg' : 'audio';
+      const fileName = `recording.${extension}`;
       
-      // 调试：打印 FormData 内容
       console.log('发送的音频:', {
-        blob: props.audio.audioBlob,
+        fileName,
+        mimeType,
         size: props.audio.audioBlob.size,
-        type: props.audio.audioBlob.type,
         duration: props.audio.duration
       });
+      
+      formData.append('file', props.audio.audioBlob, fileName);
     } else {
       throw new Error('没有录音数据');
     }
