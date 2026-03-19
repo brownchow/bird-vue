@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
-import { X, MoreHorizontal, MapPin, Activity, CheckCircle2 } from 'lucide-vue-next';
+import { X, MoreHorizontal, MapPin, Activity, CheckCircle2, AlertCircle } from 'lucide-vue-next';
 import axios from 'axios';
 
 const emit = defineEmits(['analysis-complete', 'back']);
 
+// 进度条数值
 const progress = ref(0);
+// 状态文字
 const statusText = ref('AI 正在破译这段旋律...');
+// 错误信息（用于调试显示）
+const errorMessage = ref<string | null>(null);
 
 const mockResponse = {
     "success": true,
@@ -39,8 +43,9 @@ const mockResponse = {
     "audio_file": "553d8c31_Greenfinch.mp3"
 };
 
+// 开始分析的主函数
 const startAnalysis = async () => {
-  // 模拟进度条
+  // 模拟进度条动画
   const interval = setInterval(() => {
     if (progress.value < 90) {
       progress.value += Math.random() * 10;
@@ -48,20 +53,40 @@ const startAnalysis = async () => {
   }, 500);
 
   try {
-    // 尝试调用真实接口
+    // 尝试调用后端接口 http://localhost:8000/analyze
     // 注意：在浏览器中直接调用 localhost:8000 可能会遇到 CORS 问题
-    // 这里我们设置一个较短的超时，如果失败则使用 Mock 数据
+    // 设置 3 秒超时，如果失败则使用 Mock 数据
     const response = await axios.post('http://localhost:8000/analyze', new FormData(), {
       timeout: 3000
     });
     
+    // 请求成功，清理定时器并返回结果
     clearInterval(interval);
     progress.value = 100;
     setTimeout(() => emit('analysis-complete', response.data), 500);
-  } catch (error) {
-    console.warn('API 调用失败，使用 Mock 数据演示:', error);
+  } catch (error: any) {
+    // 请求失败或超时，记录错误信息供调试
+    console.error('API 调用失败:', error);
     
-    // 模拟网络延迟
+    // 判断错误类型并设置友好的错误提示
+    if (axios.isAxiosError(error)) {
+      if (error.code === 'ECONNABORTED') {
+        errorMessage.value = `请求超时: 后端服务 ${error.config?.url} 无法响应，可能是后端未启动`;
+      } else if (error.response) {
+        errorMessage.value = `后端返回错误: ${error.response.status} ${error.response.statusText}`;
+      } else if (error.message.includes('Network Error')) {
+        errorMessage.value = '网络错误: 无法连接到后端服务，请确保后端已启动在 localhost:8000';
+      } else {
+        errorMessage.value = `请求失败: ${error.message}`;
+      }
+    } else {
+      errorMessage.value = `未知错误: ${error}`;
+    }
+    
+    // 使用 Mock 数据作为降级方案，继续演示流程
+    console.warn('使用 Mock 数据演示:', errorMessage.value);
+    
+    // 模拟网络延迟后继续
     setTimeout(() => {
       clearInterval(interval);
       progress.value = 100;
@@ -141,6 +166,12 @@ onMounted(() => {
 
     <!-- 状态指示器 -->
     <div class="mt-16 flex flex-col items-center gap-4">
+      <!-- 错误提示（调试用） -->
+      <div v-if="errorMessage" class="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-lg max-w-sm">
+        <AlertCircle class="text-red-500" :size="16" />
+        <span class="text-xs text-red-600">{{ errorMessage }}</span>
+      </div>
+      
       <div class="flex items-center gap-2 px-6 py-3 bg-[#33602d]/10 rounded-full">
         <span class="relative flex h-3 w-3">
           <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#33602d] opacity-75"></span>
