@@ -1,0 +1,15 @@
+node_modules/
+build/
+dist/
+coverage/
+.vite/
+.turbo/
+.eslintcache
+.stylelintcache
+.DS_Store
+*.log
+logs/
+*.local
+.env*
+!.env.example
+tmp/
