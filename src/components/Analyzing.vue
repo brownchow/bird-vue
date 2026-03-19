@@ -193,9 +193,9 @@ onMounted(() => {
           </div>
         </div>
       </div>
-    </div>
+      </div>
 
-    <!-- 底部标识 -->
+      <!-- 底部标识 -->
     <div class="fixed bottom-12 left-1/2 -translate-x-1/2 text-[11px] font-medium text-[#73796d] flex items-center gap-2 opacity-50">
       <CheckCircle2 :size="14" /> 基于深度学习音频分析系统 v4.2
         </div>
