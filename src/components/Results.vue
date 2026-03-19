@@ -9,10 +9,18 @@ const props = defineProps<{
 const emit = defineEmits(['back']);
 
 const detections = props.results?.detections || [];
-const birdResults = detections.map((d: any) => ({
-  ...d,
-  ...getBirdData(d.species)
-}));
+const birdResults = detections.map((d: any) => {
+  const birdData = getBirdData(d.species);
+  console.log('鸟类数据调试:', {
+    species: d.species,
+    common_name: birdData.common_name,
+    image: birdData.image
+  });
+  return {
+    ...d,
+    ...birdData
+  };
+});
 
 const primaryMatch = birdResults[0];
 const otherMatches = birdResults.slice(1);
