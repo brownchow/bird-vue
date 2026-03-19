@@ -179,26 +179,26 @@ onMounted(() => {
             <span class="relative inline-flex rounded-full h-3 w-3 bg-[#33602d]"></span>
           </span>
           <span class="text-sm font-semibold tracking-wide text-[#33602d]">匹配率 {{ Math.floor(progress) }}%...</span>
-      </div>
-
-      <!-- 进度条容器 -->
-      <div class="mt-8 p-6 bg-[#f4f4f0] rounded-tl-3xl rounded-tr-xl rounded-br-3xl rounded-bl-lg w-72 border border-[#c2c9bb]/5">
-        <div class="flex items-center justify-between mb-4">
-          <span class="text-[10px] font-bold uppercase tracking-widest text-[#42493e]/60">实时音轨</span>
-          <span class="text-[10px] font-medium text-[#33602d]">00:08</span>
         </div>
-        <div class="flex gap-1 items-center justify-center h-8">
-          <div class="flex-1 h-2 bg-[#c2c9bb]/20 rounded-full overflow-hidden">
-            <div class="h-full bg-gradient-to-r from-[#33602d] to-[#4b7a43] transition-all duration-300" :style="{ width: `${progress}%` }"></div>
+
+        <!-- 进度条容器 -->
+        <div class="mt-8 p-6 bg-[#f4f4f0] rounded-tl-3xl rounded-tr-xl rounded-br-3xl rounded-bl-lg w-72 border border-[#c2c9bb]/5">
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-[10px] font-bold uppercase tracking-widest text-[#42493e]/60">实时音轨</span>
+            <span class="text-[10px] font-medium text-[#33602d]">00:08</span>
           </div>
-        </div>
-      </div>
-      </div>
-
-      <!-- 底部标识 -->
-    <div class="fixed bottom-12 left-1/2 -translate-x-1/2 text-[11px] font-medium text-[#73796d] flex items-center gap-2 opacity-50">
-      <CheckCircle2 :size="14" /> 基于深度学习音频分析系统 v4.2
+          <div class="flex gap-1 items-center justify-center h-8">
+            <div class="flex-1 h-2 bg-[#c2c9bb]/20 rounded-full overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-[#33602d] to-[#4b7a43] transition-all duration-300" :style="{ width: `${progress}%` }"></div>
+            </div>
+          </div>
         </div>
       </template>
     </div>
+
+    <!-- 底部标识 -->
+    <div class="fixed bottom-12 left-1/2 -translate-x-1/2 text-[11px] font-medium text-[#73796d] flex items-center gap-2 opacity-50">
+      <CheckCircle2 :size="14" /> 基于深度学习音频分析系统 v4.2
+    </div>
+  </div>
 </template>
