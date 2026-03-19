@@ -20,6 +20,20 @@ export interface Bird {
  * 值：鸟类详细信息对象
  */
 export const birdDataset: Record<string, Bird> = {
+  "Cuculus micropterus_Indian Cuckoo": {
+    species: "Cuculus micropterus_Indian Cuckoo",
+    scientific_name: "Cuculus micropterus",
+    common_name: "大杜鹃",
+    description: "俗称布谷鸟，体色灰褐，腹部有细横纹。叫声低沉悠长，繁殖季节常在林间鸣叫。",
+    image: "https://images.unsplash.com/photo-1591378970376-c5d666a4def3?auto=format&fit=crop&q=80&w=400"
+  },
+  "Streptopelia chinensis_Spotted Dove": {
+    species: "Streptopelia chinensis_Spotted Dove",
+    scientific_name: "Streptopelia chinensis",
+    common_name: "珠颈斑鸠",
+    description: "体型中等，颈部有黑白点状斑纹，形似珍珠。常见于公园和庭院，叫声为三声一度的咕咕声。",
+    image: "https://images.unsplash.com/photo-1552728089-57bdde30eba3?auto=format&fit=crop&q=80&w=400"
+  },
   "Chloris chloris_European Greenfinch": {
     species: "Chloris chloris_European Greenfinch",
     scientific_name: "Chloris chloris",
@@ -61,6 +75,13 @@ export const birdDataset: Record<string, Bird> = {
     common_name: "家麻雀",
     description: "分布极广的鸟类，雄鸟头顶灰色，喉部黑色。与人类活动密切相关。",
     image: "https://images.unsplash.com/photo-1555169062-013468b47731?auto=format&fit=crop&q=80&w=400"
+  },
+  "Alcedo atthis_Common Kingfisher": {
+    species: "Alcedo atthis_Common Kingfisher",
+    scientific_name: "Alcedo atthis",
+    common_name: "普通翠鸟",
+    description: "体型较小，羽色艳丽，背部铜绿色，喉部白色。常静立于水边，俯冲捕食小鱼。",
+    image: "https://images.unsplash.com/photo-1551085254-e96b210db58a?auto=format&fit=crop&q=80&w=400"
   }
 };
 
