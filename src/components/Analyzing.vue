@@ -39,21 +39,25 @@ const startAnalysis = async () => {
 
   try {
     // 构建 FormData，将音频文件发送到后端
-    // 实现原理：
-    // 1. 从 props.audio 获取用户录音的 Blob
-    // 2. 使用 FormData 封装，字段名为 'file'（后端接口约定的字段名）
-    // 3. axios 会自动设置 Content-Type 为 multipart/form-data
     const formData = new FormData();
     if (props.audio?.audioBlob) {
       // 给文件一个合适的名称，后端可能需要根据扩展名判断音频格式
       formData.append('file', props.audio.audioBlob, 'recording.webm');
+      
+      // 调试：打印 FormData 内容
+      console.log('发送的音频:', {
+        blob: props.audio.audioBlob,
+        size: props.audio.audioBlob.size,
+        type: props.audio.audioBlob.type,
+        duration: props.audio.duration
+      });
     } else {
-      // 如果没有音频数据，提示错误
       throw new Error('没有录音数据');
     }
 
-    // 调用后端接口 http://localhost:8000/analyze
-    // 设置 10 秒超时（音频上传可能需要更长时间）
+    console.log('发送请求到 http://localhost:8000/analyze');
+    
+    // 调用后端接口
     const response = await axios.post('http://localhost:8000/analyze', formData, {
       timeout: 10000,
       headers: {
