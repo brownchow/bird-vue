@@ -25,7 +25,7 @@ export const birdDataset: Record<string, Bird> = {
     scientific_name: "Cuculus micropterus",
     common_name: "大杜鹃",
     description: "俗称布谷鸟，体色灰褐，腹部有细横纹。叫声低沉悠长，繁殖季节常在林间鸣叫。",
-    image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Cuculus_micropterus_-_Khao_Yai.jpg/1280px-Cuculus_micropterus_-_Khao_Yai.jpg"
+    image: "https://birdcount.in/wp-content/uploads/2016/11/177023731_Parth-Kansara-e1605000297590.jpg"
   },
   "Streptopelia chinensis_Spotted Dove": {
     species: "Streptopelia chinensis_Spotted Dove",
