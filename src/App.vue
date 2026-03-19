@@ -4,10 +4,13 @@ import Home from './components/Home.vue';
 import Analyzing from './components/Analyzing.vue';
 import Results from './components/Results.vue';
 
-// 应用状态：'home' | 'analyzing' | 'results'
+// 应用状态：决定当前显示哪个页面组件（home/分析中/结果页）
+// 这种模式常见于“状态机式”UI：用一个状态变量切换不同视图组件。
 const appState = ref<'home' | 'analyzing' | 'results'>('home');
 const analysisResults = ref<any>(null);
 
+// 当子组件（Home.vue）发出 "start-analysis" 事件时触发
+// 这里将状态切换为 "analyzing"，让模板渲染 Analyzing.vue。
 const handleStartAnalysis = () => {
   appState.value = 'analyzing';
 };
@@ -34,13 +37,22 @@ const handleBackToHome = () => {
       leave-to-class="opacity-0 -translate-y-4"
       mode="out-in"
     >
-      <component
-        :is="appState === 'home' ? Home : appState === 'analyzing' ? Analyzing : Results"
-        :results="analysisResults"
-        @start-analysis="handleStartAnalysis"
-        @analysis-complete="handleAnalysisComplete"
-        @back="handleBackToHome"
-      />
+      <!--
+      根据 appState 动态渲染不同页面组件：
+      - home      -> Home.vue
+      - analyzing -> Analyzing.vue
+      - results   -> Results.vue
+
+      这里的 @start-analysis / @analysis-complete / @back 都是子组件向父组件发出的事件。
+      例如 Home.vue 点击录音按钮后会 emit('start-analysis')，就会触发 handleStartAnalysis，进而切换到 Analyzing.vue。
+    -->
+    <component
+      :is="appState === 'home' ? Home : appState === 'analyzing' ? Analyzing : Results"
+      :results="analysisResults"
+      @start-analysis="handleStartAnalysis"
+      @analysis-complete="handleAnalysisComplete"
+      @back="handleBackToHome"
+    />
     </transition>
   </div>
 </template>

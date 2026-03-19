@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { Mic, Library, User, History, ArrowRight } from 'lucide-vue-next';
 
+// 声明本组件会向父组件触发的自定义事件（用于类型提示和规范）
+// 这里声明了一个名为 “start-analysis” 的事件
 const emit = defineEmits(['start-analysis']);
 
+// 点击录音按钮时触发此函数，通知父组件开始分析
 const handleRecord = () => {
   emit('start-analysis');
 };

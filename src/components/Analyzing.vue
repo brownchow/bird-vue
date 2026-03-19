@@ -3,6 +3,9 @@ import { onMounted, ref } from 'vue';
 import { X, MoreHorizontal, MapPin, Activity, CheckCircle2, AlertCircle } from 'lucide-vue-next';
 import axios from 'axios';
 
+// 向父组件发送事件：
+// - 'analysis-complete'：分析结束时回传结果
+// - 'back'：返回上一步（Home）
 const emit = defineEmits(['analysis-complete', 'back']);
 
 // 进度条数值
@@ -12,50 +15,23 @@ const statusText = ref('AI 正在破译这段旋律...');
 // 错误信息（用于调试显示）
 const errorMessage = ref<string | null>(null);
 
-const mockResponse = {
-    "success": true,
-    "message": "分析完成",
-    "detections": [
-        {
-            "species": "Chloris chloris_European Greenfinch",
-            "scientific_name": "Chloris chloris",
-            "common_name": "European Greenfinch",
-            "confidence": 0.999
-        },
-        {
-            "species": "Passer hispaniolensis_Spanish Sparrow",
-            "scientific_name": "Passer hispaniolensis",
-            "common_name": "Spanish Sparrow",
-            "confidence": 0.5461
-        },
-        {
-            "species": "Passer domesticus_House Sparrow",
-            "scientific_name": "Passer domesticus",
-            "common_name": "House Sparrow",
-            "confidence": 0.5056
-        }
-    ],
-    "location": {
-        "latitude": -1.0,
-        "longitude": -1.0,
-        "week": 11
-    },
-    "audio_file": "553d8c31_Greenfinch.mp3"
-};
+
+
+// 错误状态：是否显示错误界面
+const isError = ref(false);
 
 // 开始分析的主函数
 const startAnalysis = async () => {
   // 模拟进度条动画
   const interval = setInterval(() => {
-    if (progress.value < 90) {
+    if (progress.value < 90 && !isError.value) {
       progress.value += Math.random() * 10;
     }
   }, 500);
 
   try {
     // 尝试调用后端接口 http://localhost:8000/analyze
-    // 注意：在浏览器中直接调用 localhost:8000 可能会遇到 CORS 问题
-    // 设置 3 秒超时，如果失败则使用 Mock 数据
+    // 设置 3 秒超时
     const response = await axios.post('http://localhost:8000/analyze', new FormData(), {
       timeout: 3000
     });
@@ -65,8 +41,11 @@ const startAnalysis = async () => {
     progress.value = 100;
     setTimeout(() => emit('analysis-complete', response.data), 500);
   } catch (error: any) {
-    // 请求失败或超时，记录错误信息供调试
-    console.error('API 调用失败:', error);
+    // 请求失败或超时，停止进度条并显示错误
+    clearInterval(interval);
+    isError.value = true;
+    progress.value = 0;
+    statusText.value = '后端服务调用失败';
     
     // 判断错误类型并设置友好的错误提示
     if (axios.isAxiosError(error)) {
@@ -83,16 +62,17 @@ const startAnalysis = async () => {
       errorMessage.value = `未知错误: ${error}`;
     }
     
-    // 使用 Mock 数据作为降级方案，继续演示流程
-    console.warn('使用 Mock 数据演示:', errorMessage.value);
-    
-    // 模拟网络延迟后继续
-    setTimeout(() => {
-      clearInterval(interval);
-      progress.value = 100;
-      setTimeout(() => emit('analysis-complete', mockResponse), 500);
-    }, 3000);
+    console.error('API 调用失败:', errorMessage.value);
   }
+};
+
+// 重试函数
+const retry = () => {
+  isError.value = false;
+  errorMessage.value = null;
+  progress.value = 0;
+  statusText.value = 'AI 正在破译这段旋律...';
+  startAnalysis();
 };
 
 onMounted(() => {
@@ -159,25 +139,46 @@ onMounted(() => {
       <h2 class="font-['Manrope'] text-3xl font-extrabold text-[#1b1c1a] tracking-tight leading-tight">
         {{ statusText }}
       </h2>
-      <p class="mt-4 text-[#42493e] max-w-xs mx-auto leading-relaxed">
+      <p v-if="!isError" class="mt-4 text-[#42493e] max-w-xs mx-auto leading-relaxed">
         正在深度神经网络中检索特征，匹配上千种鸟类鸣叫数据库。
+      </p>
+      <p v-else class="mt-4 text-[#42493e] max-w-xs mx-auto leading-relaxed">
+        请检查后端服务是否启动，或点击重试按钮再次尝试。
       </p>
     </div>
 
     <!-- 状态指示器 -->
     <div class="mt-16 flex flex-col items-center gap-4">
-      <!-- 错误提示（调试用） -->
-      <div v-if="errorMessage" class="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-lg max-w-sm">
-        <AlertCircle class="text-red-500" :size="16" />
-        <span class="text-xs text-red-600">{{ errorMessage }}</span>
+      <!-- 错误界面 -->
+      <div v-if="isError" class="flex flex-col items-center gap-4">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
+          <AlertCircle class="text-red-500" :size="32" />
+        </div>
+        <p class="text-sm text-red-600 max-w-xs text-center">{{ errorMessage }}</p>
+        <div class="flex gap-3">
+          <button @click="emit('back')" class="px-6 py-2 text-sm font-medium text-[#42493e] bg-[#f4f4f0] rounded-full hover:bg-[#e8e6e0] transition-colors">
+            返回首页
+          </button>
+          <button @click="retry" class="px-6 py-2 text-sm font-medium text-white bg-[#33602d] rounded-full hover:bg-[#2a5025] transition-colors">
+            重试
+          </button>
+        </div>
       </div>
       
-      <div class="flex items-center gap-2 px-6 py-3 bg-[#33602d]/10 rounded-full">
-        <span class="relative flex h-3 w-3">
-          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#33602d] opacity-75"></span>
-          <span class="relative inline-flex rounded-full h-3 w-3 bg-[#33602d]"></span>
-        </span>
-        <span class="text-sm font-semibold tracking-wide text-[#33602d]">匹配率 {{ Math.floor(progress) }}%...</span>
+      <!-- 正常状态 -->
+      <template v-else>
+        <!-- 错误提示（调试用） -->
+        <div v-if="errorMessage" class="flex items-center gap-2 px-4 py-2 bg-red-50 border border-red-200 rounded-lg max-w-sm">
+          <AlertCircle class="text-red-500" :size="16" />
+          <span class="text-xs text-red-600">{{ errorMessage }}</span>
+        </div>
+        
+        <div class="flex items-center gap-2 px-6 py-3 bg-[#33602d]/10 rounded-full">
+          <span class="relative flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#33602d] opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-[#33602d]"></span>
+          </span>
+          <span class="text-sm font-semibold tracking-wide text-[#33602d]">匹配率 {{ Math.floor(progress) }}%...</span>
       </div>
 
       <!-- 进度条容器 -->
@@ -197,6 +198,7 @@ onMounted(() => {
     <!-- 底部标识 -->
     <div class="fixed bottom-12 left-1/2 -translate-x-1/2 text-[11px] font-medium text-[#73796d] flex items-center gap-2 opacity-50">
       <CheckCircle2 :size="14" /> 基于深度学习音频分析系统 v4.2
+        </div>
+      </template>
     </div>
-  </div>
 </template>
