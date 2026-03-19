@@ -1,13 +1,115 @@
 <script setup lang="ts">
-import { Mic, Library, User, History, ArrowRight } from 'lucide-vue-next';
+import { ref } from 'vue';
+import { Mic, Library, User, History, ArrowRight, MicOff } from 'lucide-vue-next';
 
-// 声明本组件会向父组件触发的自定义事件（用于类型提示和规范）
-// 这里声明了一个名为 “start-analysis” 的事件
+// 声明本组件会向父组件触发的自定义事件
+// - 'start-analysis': 开始分析（传递音频数据）
 const emit = defineEmits(['start-analysis']);
 
-// 点击录音按钮时触发此函数，通知父组件开始分析
-const handleRecord = () => {
-  emit('start-analysis');
+// 录音状态
+const isRecording = ref(false);
+const recordingDuration = ref(0);
+let mediaRecorder: MediaRecorder | null = null;
+let audioChunks: Blob[] = [];
+let durationInterval: number | null = null;
+
+// 音频格式：使用 WebM（浏览器原生支持）
+const MIME_TYPE = 'audio/webm';
+
+/**
+ * 开始录音的函数
+ * 实现原理：
+ * 1. 使用 navigator.mediaDevices.getUserMedia 获取麦克风权限
+ * 2. 创建 MediaRecorder 实例，设置 MIME_TYPE 为 audio/webm
+ * 3. 监听 dataavailable 事件，将音频数据块收集到 audioChunks 数组
+ * 4. 监听 stop 事件，将所有音频块合并为一个 Blob，并通过事件发送给父组件
+ */
+const startRecording = async () => {
+  try {
+    // 请求麦克风权限，获取音频流
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    
+    // 创建 MediaRecorder 实例
+    mediaRecorder = new MediaRecorder(stream, { mimeType: MIME_TYPE });
+    audioChunks = [];
+    
+    // 监听音频数据可用事件（录音过程中会多次触发）
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        audioChunks.push(event.data);
+      }
+    };
+    
+    // 监听录音停止事件
+    mediaRecorder.onstop = () => {
+      // 将所有音频块合并为一个 Blob
+      const audioBlob = new Blob(audioChunks, { type: MIME_TYPE });
+      
+      // 停止所有音轨，释放麦克风资源
+      stream.getTracks().forEach(track => track.stop());
+      
+      // 通知父组件开始分析，传递音频 Blob 和时长
+      emit('start-analysis', { audioBlob, duration: recordingDuration.value });
+    };
+    
+    // 开始录音
+    mediaRecorder.start(100); // 每 100ms 收集一次数据
+    
+    // 更新录音状态
+    isRecording.value = true;
+    recordingDuration.value = 0;
+    
+    // 启动计时器，显示录音时长
+    durationInterval = window.setInterval(() => {
+      recordingDuration.value++;
+    }, 1000);
+    
+  } catch (error) {
+    console.error('无法访问麦克风:', error);
+    alert('无法访问麦克风，请检查浏览器权限设置');
+  }
+};
+
+/**
+ * 停止录音的函数
+ * 实现原理：
+ * 1. 检查 MediaRecorder 是否正在录音
+ * 2. 如果正在录音，调用 stop() 方法停止
+ * 3. 清除计时器，更新录音状态
+ */
+const stopRecording = () => {
+  if (mediaRecorder && mediaRecorder.state === 'recording') {
+    mediaRecorder.stop();
+    
+    // 清除计时器
+    if (durationInterval) {
+      clearInterval(durationInterval);
+      durationInterval = null;
+    }
+    
+    isRecording.value = false;
+  }
+};
+
+/**
+ * 处理按钮点击事件（按下和松开）
+ * 实现原理：
+ * - mousedown/touchstart: 开始录音
+ * - mouseup/mouseleave/touchend: 停止录音
+ */
+const handlePressStart = () => {
+  startRecording();
+};
+
+const handlePressEnd = () => {
+  stopRecording();
+};
+
+// 格式化录音时长显示
+const formatDuration = (seconds: number) => {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 </script>
 
@@ -54,15 +156,35 @@ const handleRecord = () => {
           </div>
         </div>
 
-        <!-- 录音按钮 -->
+        <!-- 录音按钮：支持按住录音 -->
+        <!-- 实现原理：使用 mousedown/mouseup（桌面）和 touchstart/touchend（移动端）事件 -->
+        <!-- 按下按钮开始录音，松开按钮停止录音并发送给后端 -->
         <div class="relative group">
-          <div class="absolute inset-0 bg-[#33602d]/10 rounded-full scale-125 blur-2xl group-active:scale-110 transition-transform duration-500"></div>
+          <div class="absolute inset-0 bg-[#33602d]/10 rounded-full scale-125 blur-2xl group-active:scale-110 transition-transform duration-500"
+               :class="{ 'animate-pulse scale-150': isRecording }"></div>
           <button 
-            @click="handleRecord"
-            class="relative w-48 h-48 rounded-full bg-gradient-to-br from-[#33602d] to-[#4b7a43] flex items-center justify-center text-white shadow-2xl shadow-[#33602d]/30 active:scale-95 transition-all duration-300"
+            @mousedown="handlePressStart"
+            @mouseup="handlePressEnd"
+            @mouseleave="handlePressEnd"
+            @touchstart.prevent="handlePressStart"
+            @touchend.prevent="handlePressEnd"
+            class="relative w-48 h-48 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300"
+            :class="isRecording 
+              ? 'bg-gradient-to-br from-red-500 to-red-600 shadow-red-500/30' 
+              : 'bg-gradient-to-br from-[#33602d] to-[#4b7a43] shadow-[#33602d]/30'"
           >
-            <Mic :size="64" fill="currentColor" />
+            <!-- 录音中显示停止图标 + 时长 -->
+            <div v-if="isRecording" class="flex flex-col items-center">
+              <MicOff :size="48" fill="currentColor" />
+              <span class="text-white text-lg font-bold mt-2">{{ formatDuration(recordingDuration) }}</span>
+            </div>
+            <!-- 未录音显示麦克风图标 -->
+            <Mic v-else :size="64" fill="currentColor" class="text-white" />
           </button>
+          <!-- 提示文字 -->
+          <p class="text-center mt-4 text-sm text-[#42493e]">
+            {{ isRecording ? '松开停止录音' : '按住开始录音' }}
+          </p>
         </div>
 
         <!-- 历史记录 -->

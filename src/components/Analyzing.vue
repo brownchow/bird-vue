@@ -3,6 +3,15 @@ import { onMounted, ref } from 'vue';
 import { X, MoreHorizontal, MapPin, Activity, CheckCircle2, AlertCircle } from 'lucide-vue-next';
 import axios from 'axios';
 
+// 接收父组件传递的音频数据
+// 实现原理：从 App.vue 传递过来的 { audioBlob, duration }
+const props = defineProps<{
+  audio?: {
+    audioBlob: Blob;
+    duration: number;
+  } | null;
+}>();
+
 // 向父组件发送事件：
 // - 'analysis-complete'：分析结束时回传结果
 // - 'back'：返回上一步（Home）
@@ -15,12 +24,11 @@ const statusText = ref('AI 正在破译这段旋律...');
 // 错误信息（用于调试显示）
 const errorMessage = ref<string | null>(null);
 
-
-
 // 错误状态：是否显示错误界面
 const isError = ref(false);
 
 // 开始分析的主函数
+// 实现原理：将音频 Blob 封装为 FormData，发送到后端 /analyze 接口
 const startAnalysis = async () => {
   // 模拟进度条动画
   const interval = setInterval(() => {
@@ -30,10 +38,28 @@ const startAnalysis = async () => {
   }, 500);
 
   try {
-    // 尝试调用后端接口 http://localhost:8000/analyze
-    // 设置 3 秒超时
-    const response = await axios.post('http://localhost:8000/analyze', new FormData(), {
-      timeout: 3000
+    // 构建 FormData，将音频文件发送到后端
+    // 实现原理：
+    // 1. 从 props.audio 获取用户录音的 Blob
+    // 2. 使用 FormData 封装，字段名为 'file'（后端接口约定的字段名）
+    // 3. axios 会自动设置 Content-Type 为 multipart/form-data
+    const formData = new FormData();
+    if (props.audio?.audioBlob) {
+      // 给文件一个合适的名称，后端可能需要根据扩展名判断音频格式
+      formData.append('file', props.audio.audioBlob, 'recording.webm');
+    } else {
+      // 如果没有音频数据，提示错误
+      throw new Error('没有录音数据');
+    }
+
+    // 调用后端接口 http://localhost:8000/analyze
+    // 设置 10 秒超时（音频上传可能需要更长时间）
+    const response = await axios.post('http://localhost:8000/analyze', formData, {
+      timeout: 10000,
+      headers: {
+        // 明确指定 Content-Type，让 axios 自动处理 boundary
+        'Content-Type': 'multipart/form-data'
+      }
     });
     
     // 请求成功，清理定时器并返回结果

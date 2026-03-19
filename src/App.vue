@@ -5,24 +5,41 @@ import Analyzing from './components/Analyzing.vue';
 import Results from './components/Results.vue';
 
 // 应用状态：决定当前显示哪个页面组件（home/分析中/结果页）
-// 这种模式常见于“状态机式”UI：用一个状态变量切换不同视图组件。
 const appState = ref<'home' | 'analyzing' | 'results'>('home');
 const analysisResults = ref<any>(null);
 
-// 当子组件（Home.vue）发出 "start-analysis" 事件时触发
-// 这里将状态切换为 "analyzing"，让模板渲染 Analyzing.vue。
-const handleStartAnalysis = () => {
+// 存储当前分析的音频数据（Blob），传递给 Analyzing.vue
+const currentAudio = ref<{ audioBlob: Blob; duration: number } | null>(null);
+
+/**
+ * 当子组件（Home.vue）发出 "start-analysis" 事件时触发
+ * 实现原理：
+ * 1. Home.vue 用户按住按钮录音，松开后发出 start-analysis 事件
+ * 2. 这里接收音频 Blob 和时长，保存到 currentAudio
+ * 3. 切换 appState 到 'analyzing'，渲染 Analyzing.vue 并传递音频数据
+ */
+const handleStartAnalysis = (audioData: { audioBlob: Blob; duration: number }) => {
+  currentAudio.value = audioData;
   appState.value = 'analyzing';
 };
 
+/**
+ * 分析完成时触发
+ * 保存结果并跳转到结果页
+ */
 const handleAnalysisComplete = (results: any) => {
   analysisResults.value = results;
   appState.value = 'results';
 };
 
+/**
+ * 返回首页
+ * 重置所有状态
+ */
 const handleBackToHome = () => {
   appState.value = 'home';
   analysisResults.value = null;
+  currentAudio.value = null;
 };
 </script>
 
@@ -49,6 +66,7 @@ const handleBackToHome = () => {
     <component
       :is="appState === 'home' ? Home : appState === 'analyzing' ? Analyzing : Results"
       :results="analysisResults"
+      :audio="currentAudio"
       @start-analysis="handleStartAnalysis"
       @analysis-complete="handleAnalysisComplete"
       @back="handleBackToHome"
